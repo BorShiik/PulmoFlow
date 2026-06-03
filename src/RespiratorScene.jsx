@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, RoundedBox, BakeShadows, Environment, PerformanceMonitor, ContactShadows, Sparkles } from '@react-three/drei';
+import { OrbitControls, RoundedBox, BakeShadows, Environment, ContactShadows, Sparkles } from '@react-three/drei';
 import { useSpring, animated } from '@react-spring/three';
 import { useDrag } from '@use-gesture/react';
 import { useRespiratorStore } from './store';
@@ -116,12 +116,16 @@ function InteractiveKnob({ setControlsEnabled }) {
  */
 export default function RespiratorScene() {
   const [controlsEnabled, setControlsEnabled] = useState(true);
-  const [dpr, setDpr] = useState(1.5);
 
   // Only run the 3D scene while it is actually on-screen and the tab is visible.
   // This stops the render loop + physics when the user is elsewhere on the page.
   const wrapRef = useRef(null);
   const [active, setActive] = useState(false);
+
+  const isMobile = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return /Mobi|Android|iPhone|iPad|Macintosh/i.test(navigator.userAgent) || window.innerWidth < 768;
+  }, []);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -141,16 +145,23 @@ export default function RespiratorScene() {
     <div ref={wrapRef} style={{ width: '100%', height: '100%', background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)' }}>
     <Canvas
       frameloop={active ? 'always' : 'demand'}
-      dpr={dpr}
+      dpr={isMobile ? 1 : [1, 1.5]}
       camera={{ position: [0, 1.8, 3.8], fov: 42 }}
       style={{ width: '100%', height: '100%', outline: 'none', touchAction: 'pan-y' }}
     >
       <fog attach="fog" args={['#0f172a', 5, 12]} />
-      <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(1.5)} />
       <BakeShadows />
       <Environment preset="studio" />
-      <ContactShadows position={[0, -0.45, 0]} opacity={0.6} scale={10} blur={2.5} far={4} color="#000000" />
-      <Sparkles count={150} scale={12} size={3} speed={0.2} opacity={0.15} color="#38bdf8" />
+      <ContactShadows 
+        position={[0, -0.45, 0]} 
+        opacity={0.6} 
+        scale={10} 
+        blur={2.5} 
+        far={4} 
+        color="#000000" 
+        resolution={isMobile ? 256 : 512}
+      />
+      <Sparkles count={isMobile ? 30 : 150} scale={12} size={3} speed={0.2} opacity={0.15} color="#38bdf8" />
 
       {/* Lights */}
       <ambientLight intensity={0.4} />

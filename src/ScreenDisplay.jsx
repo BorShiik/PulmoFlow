@@ -399,7 +399,7 @@ export default function ScreenDisplay({ width = 1.6, height = 1.0, active = true
           
           pos[j * 3] = px;
           pos[j * 3 + 1] = py;
-          pos[j * 3 + 2] = 0.001; // slightly in front of canvas
+          pos[j * 3 + 2] = 0.003; // slightly in front of canvas to avoid Z-fighting
         }
         if (lineRefs.current[i] && lineRefs.current[i].geometry) {
           lineRefs.current[i].geometry.setPositions(pos);
@@ -628,9 +628,9 @@ export default function ScreenDisplay({ width = 1.6, height = 1.0, active = true
       </mesh>
       
       {/* WebGL Lines for Charts */}
-      <Line ref={el => lineRefs.current[0] = el} points={initialPoints} color={C.orange} lineWidth={2} toneMapped={false} />
-      <Line ref={el => lineRefs.current[1] = el} points={initialPoints} color={C.green} lineWidth={2} toneMapped={false} />
-      <Line ref={el => lineRefs.current[2] = el} points={initialPoints} color={C.cyan} lineWidth={2} toneMapped={false} />
+      <Line ref={el => lineRefs.current[0] = el} points={initialPoints} color={C.orange} lineWidth={2} toneMapped={false} depthWrite={false} />
+      <Line ref={el => lineRefs.current[1] = el} points={initialPoints} color={C.green} lineWidth={2} toneMapped={false} depthWrite={false} />
+      <Line ref={el => lineRefs.current[2] = el} points={initialPoints} color={C.cyan} lineWidth={2} toneMapped={false} depthWrite={false} />
     </group>
   );
 }
