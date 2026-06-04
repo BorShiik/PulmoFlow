@@ -243,10 +243,7 @@ function drawPatientInline(ctx, C, x, y, w, h) {
 export default function ScreenDisplay({ width = 1.6, height = 1.0, active = true }) {
   const { gl } = useThree();
 
-  // Keep the latest `active` flag readable inside the physics interval without
-  // tearing it down on every visibility change.
-  const activeRef = useRef(active);
-  activeRef.current = active;
+
 
   const canvas = useMemo(() => {
     const cv = document.createElement('canvas');
@@ -288,19 +285,23 @@ export default function ScreenDisplay({ width = 1.6, height = 1.0, active = true
     const store = useRespiratorStore.getState();
     worker.postMessage({ type: 'params', payload: store.params });
     worker.postMessage({ type: 'pause', payload: store.paused });
-    if (activeRef.current) {
-      worker.postMessage({ type: 'start' });
-    }
+    worker.postMessage({ type: 'start' });
 
-    const unsubParams = useRespiratorStore.subscribe(
-      (state) => state.params,
-      (params) => worker.postMessage({ type: 'params', payload: params })
-    );
+    let lastParams = store.params;
+    const unsubParams = useRespiratorStore.subscribe((state) => {
+      if (state.params !== lastParams) {
+        lastParams = state.params;
+        worker.postMessage({ type: 'params', payload: state.params });
+      }
+    });
     
-    const unsubPause = useRespiratorStore.subscribe(
-      (state) => state.paused,
-      (paused) => worker.postMessage({ type: 'pause', payload: paused })
-    );
+    let lastPaused = store.paused;
+    const unsubPause = useRespiratorStore.subscribe((state) => {
+      if (state.paused !== lastPaused) {
+        lastPaused = state.paused;
+        worker.postMessage({ type: 'pause', payload: state.paused });
+      }
+    });
 
     worker.onmessage = (e) => {
       if (e.data.type === 'tick') {
@@ -318,17 +319,6 @@ export default function ScreenDisplay({ width = 1.6, height = 1.0, active = true
       worker.terminate();
     };
   }, [stateRef]);
-
-  // Start/stop physics worker based on visibility
-  useEffect(() => {
-    if (workerRef.current) {
-      if (active) {
-        workerRef.current.postMessage({ type: 'start' });
-      } else {
-        workerRef.current.postMessage({ type: 'stop' });
-      }
-    }
-  }, [active]);
 
   // Prevent excessive updates: track what changed
   const lastDrawState = useRef({

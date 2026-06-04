@@ -120,7 +120,7 @@ export default function RespiratorScene() {
   // Only run the 3D scene while it is actually on-screen and the tab is visible.
   // This stops the render loop + physics when the user is elsewhere on the page.
   const wrapRef = useRef(null);
-  const [active, setActive] = useState(false);
+  const [active, setActive] = useState(true);
 
   const isMobile = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -130,15 +130,12 @@ export default function RespiratorScene() {
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
-    let onScreen = false;
-    const update = () => setActive(onScreen && document.visibilityState === 'visible');
     const io = new IntersectionObserver(
-      ([entry]) => { onScreen = entry.isIntersecting; update(); },
+      ([entry]) => setActive(entry.isIntersecting),
       { threshold: 0.05 }
     );
     io.observe(el);
-    document.addEventListener('visibilitychange', update);
-    return () => { io.disconnect(); document.removeEventListener('visibilitychange', update); };
+    return () => io.disconnect();
   }, []);
 
   return (
